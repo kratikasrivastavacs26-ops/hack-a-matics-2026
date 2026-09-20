@@ -385,739 +385,1017 @@
     <div class="disclaimer">Demo authentication for evaluation purposes only — not intended for production patient data.</div>
   </div>
 </div>
+<div id="appScreen" class="wrap app-screen" style="display:none;">
 
-<div id="appScreen" class="app-screen" style="display:none;">
-  <div class="wrap">
-    <header>
-      <div class="brand">
-        <h1>MED<span>FLOW</span></h1>
-        <div class="tag">Live Triage Operations · Enterprise Edition</div>
-      </div>
+  <header>
+    <div class="brand">
       <div>
-        <div class="real-clock">
-          <span class="rc-label">● LIVE</span>
-          <span id="realClockText">Sunday, Sep 20, 2026 — 10:53:18 AM IST</span>
-        </div>
-        <div class="session-line">
-          <span class="lock">🔒</span> Secure session active — Role: <b id="currentRoleLabel">Hospital Administrator</b>
-          <button class="ghost" id="logoutBtn" style="padding:2px 8px; font-size:10px; margin-left:6px;">Log out</button>
-        </div>
-      </div>
-    </header>
-
-    <div class="controls">
-      <div class="grp">
-        <button id="startBtn" class="primary">▶ Start</button>
-        <button id="resetBtn" class="ghost">↺ Reset</button>
-      </div>
-      <div class="grp">
-        <label class="mini">Speed</label>
-        <input type="range" id="speedRange" min="0.5" max="5" step="0.5" value="1" style="width:70px;">
-        <span class="speed-val" id="speedVal">1.0x</span>
-      </div>
-      <div class="grp">
-        <label class="mini">Arrival rate</label>
-        <input type="range" id="arrivalRange" min="2" max="25" step="1" value="8" style="width:70px;">
-        <span class="speed-val" id="arrivalVal">8/hr</span>
-      </div>
-      <div class="grp" style="border-right:none; padding-right:0;">
-        <label class="mini">Strategy</label>
-        <select id="strategySelect">
-          <option value="adaptive">Adaptive priority (urgency² + wait aging)</option>
-          <option value="strict">Strict urgency only</option>
-          <option value="fifo">FIFO (First In, First Out)</option>
-        </select>
+        <h1>MED<span>FLOW</span></h1>
+        <div class="tag">Prioritize patients. Optimize resources.</div>
+        <div class="real-clock"><span class="rc-label">● LIVE</span> <span id="realClock">—</span></div>
       </div>
     </div>
-
-    <div class="controls" style="margin-top:-8px; margin-bottom:16px; background:var(--panel-alt);">
-      <div style="font-size:11px; color:var(--text-dim); margin-right:8px; font-family:var(--font-head); font-weight:600;">DISRUPTION CONTROLS:</div>
-      <button class="warn" id="chaosMass">⚡ Mass casualty event</button>
-      <button class="warn" id="chaosStaff">👥 Staff shortage (-4 nurses)</button>
-      <button class="warn" id="chaosOR">⚠️ OR failure (1 room down)</button>
-      <button class="ghost" id="compareBtn" style="margin-left:auto;">📊 Compare strategies</button>
-    </div>
-
-    <div class="grid">
-      <!-- COLUMN 1: RESOURCE POOL -->
-      <div class="panel">
-        <h2>Resource pool <small>capacity &amp; occupancy</small></h2>
-        
-        <div class="res-block">
-          <div class="res-label"><span class="name">General beds</span><span class="count"><span id="genAvail" class="avail">20</span> / 20 free</span></div>
-          <div class="unit-grid" id="genBedsGrid"></div>
-        </div>
-
-        <div class="res-block">
-          <div class="res-label"><span class="name">ICU beds</span><span class="count"><span id="icuAvail" class="avail">6</span> / 6 free</span></div>
-          <div class="unit-grid" id="icuBedsGrid"></div>
-        </div>
-
-        <div class="res-block">
-          <div class="res-label"><span class="name">Operating rooms</span><span class="count"><span id="orAvail" class="avail">3</span> / 3 free</span></div>
-          <div class="unit-grid" id="orBedsGrid"></div>
-        </div>
-
-        <div class="res-block">
-          <div class="res-label"><span class="name">Doctors on floor</span><span class="count"><span id="docAvail" class="avail">10</span> / 10 free</span></div>
-          <div class="doc-gauge"><div class="doc-fill" id="docFill" style="width:100%;"></div></div>
-        </div>
-
-        <div class="res-block">
-          <div class="res-label"><span class="name">Nurses</span><span class="count"><span id="nurseAvail" class="avail">14</span> / 14 free</span></div>
-          <div class="unit-grid" id="nurseGrid"></div>
-        </div>
-
-        <div class="res-block">
-          <div class="res-label"><span class="name">Ventilators</span><span class="count"><span id="ventAvail" class="avail">6</span> / 6 free</span></div>
-          <div class="unit-grid" id="ventGrid"></div>
-        </div>
-
-        <div class="res-block" style="margin-bottom:0;">
-          <div class="res-label"><span class="name">Ambulances</span><span class="count"><span id="ambAvail" class="avail">3</span> / 3 free</span></div>
-          <div class="unit-grid" id="ambGrid"></div>
-        </div>
-
-        <div class="formula-note" id="activeDisruptionsNote" style="margin-top:auto;">
-          No active disruptions. System operating at nominal capacity.
-        </div>
-      </div>
-
-      <!-- COLUMN 2: WAITING & ADMITTED QUEUES -->
-      <div class="panel">
-        <h2>Waiting queue <small id="waitingCountLabel">0 waiting</small></h2>
-        <div class="queue-list" id="waitingQueueList">
-          <div class="empty-note">Queue is empty — all clear.</div>
-        </div>
-
-        <div class="admitted-label">
-          <span>In treatment / Admitted</span>
-          <small id="admittedCountLabel">0 active</small>
-        </div>
-        <div class="admitted-list" id="admittedList">
-          <div class="empty-note" style="padding:10px;">No patients currently admitted.</div>
-        </div>
-      </div>
-
-      <!-- COLUMN 3: METRICS & LIVE PERFORMANCE -->
-      <div class="panel">
-        <h2>Live performance <small>updated every tick</small></h2>
-        <div class="kpi-row">
-          <div class="kpi">
-            <div class="val" id="kpiWait">0.0</div>
-            <div class="lbl">Weighted wait time (min)</div>
-          </div>
-          <div class="kpi">
-            <div class="val" id="kpiTriage">100%</div>
-            <div class="lbl">Triage efficiency</div>
-          </div>
-        </div>
-        <div class="kpi-row" style="margin-bottom:12px;">
-          <div class="kpi">
-            <div class="val" id="kpiUtil">0%</div>
-            <div class="lbl">Avg resource utilization</div>
-          </div>
-          <div class="kpi">
-            <div class="val" id="kpiServed">0</div>
-            <div class="lbl">Patients served</div>
-          </div>
-        </div>
-
-        <canvas id="perfCanvas" width="360" height="150"></canvas>
-        <div class="chart-legend">
-          <span><i style="background:var(--mint);"></i> Wait time</span>
-          <span><i style="background:var(--amber);"></i> Utilization %</span>
-          <span><i style="background:var(--red);"></i> Efficiency %</span>
-        </div>
-
-        <div class="formula-note">
-          Priority score = <code>8·urgency² + 1.5·waitMinutes</code>. Quadratic urgency dominates early; the linear wait term ages low-urgency patients upward over time so no one waits forever. Triage efficiency = <code>(stabilized critical ÷ total critical influx) × 100</code>.
-        </div>
+    <div class="clock-block">
+      <div class="clock" id="clockDisplay">00:00</div>
+      <div class="clock-sub" id="clockSub">Day 1 · Simulated hospital time</div>
+      <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusText">Paused</span></div>
+      <div class="session-line">
+        <span class="lock">🔒</span> Secure session active — Role: <b id="sessionRole">Administrator</b>
+        <button id="logoutBtn" class="ghost">Log out</button>
       </div>
     </div>
+  </header>
 
-    <!-- SIMULATION RESULT & REAL-WORLD IMPACT BOX -->
-    <div class="panel result-panel">
-      <h2>Simulation result &amp; real-world impact <small>projected run metrics</small></h2>
-      <div class="result-grid">
-        <div class="result-stat">
-          <div class="rval" id="resServedVal">0 <span class="of">of</span> 0</div>
-          <div class="rlbl">Patients served<small>successfully routed</small></div>
-        </div>
-        <div class="result-stat">
-          <div class="rval" id="resWaitVal">0.0m</div>
-          <div class="rlbl">Avg wait time<small id="resUtilSub">0% utilized</small></div>
-        </div>
-        <div class="result-stat">
-          <div class="rval" id="resTriageVal">100%</div>
-          <div class="rlbl">Critical cases<small>within target threshold</small></div>
-        </div>
-        <div class="result-stat">
-          <div class="rval" id="resUnassignedVal">0</div>
-          <div class="rlbl">Unassigned queue<small>0 conflicts detected</small></div>
-        </div>
-        <div class="result-stat">
-          <div class="rval" id="resNurseRatioVal">1 : 0.0</div>
-          <div class="rlbl">Nurse-to-patient ratio<small>active load / 14 staff</small></div>
-        </div>
-        <div class="result-stat">
-          <div class="rval" id="resAmbulanceDelayVal">0.0m</div>
-          <div class="rlbl">Ambulance offload delay<small>live crew handoff wait</small></div>
-        </div>
-      </div>
-
-      <div class="result-action">
-        <div class="ra-badge ok" id="recomBadge">Optimal</div>
-        <div id="recomText">System running smoothly. Priority queue is maintaining zero starvation and allocating ICU pods within nominal time windows.</div>
-      </div>
+  <div class="controls">
+    <div class="grp">
+      <button class="primary" id="playBtn">▶ Start</button>
+      <button class="ghost" id="resetBtn">↺ Reset</button>
     </div>
-
-    <!-- OPERATIONS LOG -->
-    <div class="panel log-panel">
-      <h2>Operations audit log <small>live feed</small></h2>
-      <div class="log-feed" id="logFeed">
-        <div><span class="t">[00:00:00]</span> System initialized. Binary heap priority queue active. Ready for live simulation run.</div>
-      </div>
+    <div class="grp">
+      <label class="mini">Speed</label>
+      <input type="range" id="speedSlider" min="1" max="5" value="2" step="1">
+      <span class="speed-val" id="speedVal">x2</span>
     </div>
-
-    <footer>
-      MedFlow Triage Operations Engine · Hack-a-matics Public Release · Designed for Enterprise Emergency Management
-    </footer>
+    <div class="grp">
+      <label class="mini">Arrival rate</label>
+      <input type="range" id="rateSlider" min="2" max="24" value="8" step="1">
+      <span class="speed-val" id="rateVal">8/hr</span>
+    </div>
+    <div class="grp">
+      <label class="mini">Strategy</label>
+      <select id="strategySelect">
+        <option value="adaptive">Adaptive priority (urgency² + wait aging)</option>
+        <option value="urgency">Urgency-only</option>
+        <option value="fcfs">First-come, first-served</option>
+      </select>
+    </div>
+    <div class="grp" style="border-right:none;">
+      <button class="warn" id="mciBtn">🚨 Mass casualty event</button>
+      <button class="ghost" id="shortageBtn">👥 Staff shortage</button>
+      <button class="ghost" id="failureBtn">🛠 OR failure</button>
+      <button id="compareBtn">⇄ Compare strategies</button>
+    </div>
   </div>
+
+  <div class="grid">
+
+    <!-- RESOURCES -->
+    <div class="panel" id="resourcePanel">
+      <h2>Resource pool <small>capacity &amp; occupancy</small></h2>
+
+      <div class="res-block">
+        <div class="res-label"><span class="name">General beds</span><span class="count"><span class="avail" id="bedAvail">20</span> / 20 free</span></div>
+        <div class="unit-grid" id="bedGrid"></div>
+      </div>
+
+      <div class="res-block">
+        <div class="res-label"><span class="name">ICU beds</span><span class="count"><span class="avail" id="icuAvail">6</span> / 6 free</span></div>
+        <div class="unit-grid" id="icuGrid"></div>
+      </div>
+
+      <div class="res-block">
+        <div class="res-label"><span class="name">Operating rooms</span><span class="count"><span class="avail" id="orAvail">3</span> / 3 free</span></div>
+        <div class="unit-grid" id="orGrid"></div>
+      </div>
+
+      <div class="res-block">
+        <div class="res-label"><span class="name">Doctors on floor</span><span class="count"><span id="docAvail">10</span> / <span id="docTotal">10</span> free</span></div>
+        <div class="doc-gauge"><div class="doc-fill" id="docFill" style="width:0%"></div></div>
+      </div>
+
+      <div class="res-block">
+        <div class="res-label"><span class="name">Nurses</span><span class="count"><span class="avail" id="nurseAvail">14</span> / 14 free</span></div>
+        <div class="unit-grid" id="nurseGrid"></div>
+      </div>
+
+      <div class="res-block">
+        <div class="res-label"><span class="name">Ventilators</span><span class="count"><span class="avail" id="ventAvail">6</span> / 6 free</span></div>
+        <div class="unit-grid" id="ventGrid"></div>
+      </div>
+
+      <div class="res-block">
+        <div class="res-label"><span class="name">Ambulances</span><span class="count"><span class="avail" id="ambAvail">3</span> / 3 free</span></div>
+        <div class="unit-grid" id="ambGrid"></div>
+      </div>
+
+      <div class="event-btns">
+        <div style="font-size:10.5px; color:var(--text-faint);" id="eventStatus">No active disruptions.</div>
+      </div>
+    </div>
+
+    <!-- QUEUE -->
+    <div class="panel">
+      <h2>Waiting queue <small id="queueCount">0 waiting</small></h2>
+      <div class="queue-list" id="queueList">
+        <div class="empty-note">No patients waiting. Press Start to begin the simulation.</div>
+      </div>
+
+      <div class="admitted-label">In treatment <small id="admittedCount">0 active</small></div>
+      <div class="admitted-list" id="admittedList">
+        <div class="empty-note">No patients currently admitted.</div>
+      </div>
+    </div>
+
+    <!-- METRICS -->
+    <div class="panel">
+      <h2>Live performance <small>updated every tick</small></h2>
+      <div class="kpi-row">
+        <div class="kpi"><div class="val" id="kpiWWT">0.0</div><div class="lbl">Weighted wait time (min)</div></div>
+        <div class="kpi"><div class="val" id="kpiTriage">100%</div><div class="lbl">Triage efficiency</div></div>
+        <div class="kpi"><div class="val" id="kpiUtil">0%</div><div class="lbl">Avg resource utilization</div></div>
+        <div class="kpi"><div class="val" id="kpiServed">0</div><div class="lbl">Patients served</div></div>
+      </div>
+      <canvas id="chartCanvas" height="150"></canvas>
+      <div class="chart-legend">
+        <span><i style="background:var(--mint)"></i>Weighted wait time</span>
+        <span><i style="background:var(--amber)"></i>Utilization %</span>
+        <span><i style="background:var(--red)"></i>Triage efficiency %</span>
+      </div>
+      <div class="formula-note">
+        Priority score = <code>8·urgency²</code> + <code>1.5·waitMinutes</code>. Quadratic urgency dominates early;
+        the linear wait term ages low-urgency patients upward over time so no one waits forever.
+        Triage efficiency = <code>(stabilized critical ÷ total critical influx) × 100</code>. Full worked examples below.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel log-panel">
+    <h2>Operations log <small>live admission / discharge feed</small></h2>
+    <div class="log-feed" id="logFeed"></div>
+  </div>
+
+  <div class="panel math-panel">
+    <h2>The math behind MedFlow <small>recomputed every simulated minute — not static text</small></h2>
+    <div class="math-grid">
+      <div class="math-card">
+        <div class="mf-title">Priority score — with aging</div>
+        <div class="mf-formula">P(patient) = 8·urgency&sup2; + 1.5·waitMinutes</div>
+        <div class="mf-example" id="mfPriority">Queue is empty.</div>
+      </div>
+      <div class="math-card">
+        <div class="mf-title">Weighted wait-time penalty</div>
+        <div class="mf-formula">Penalty(p) = urgency × waitMinutes<br>SystemPenalty = &Sigma; Penalty(p)</div>
+        <div class="mf-example" id="mfPenalty">No penalty accruing.</div>
+      </div>
+      <div class="math-card">
+        <div class="mf-title">Triage efficiency ratio</div>
+        <div class="mf-formula">TER = (Stabilized critical &divide; Total critical influx) &times; 100</div>
+        <div class="mf-example" id="mfTriage">No critical patients yet.</div>
+      </div>
+    </div>
+    <div class="math-note" id="mfAgingNote">Longest anyone is currently waiting: <b>none</b> — aging keeps this bounded even under sustained Level-5 pressure, so no patient is neglected indefinitely.</div>
+  </div>
+
+  <div class="panel result-panel">
+    <h2>Simulation result &amp; real-world impact <small>live summary — updates every tick</small></h2>
+    <div class="result-grid">
+      <div class="result-stat">
+        <div class="rval" id="resServed">0 <span class="of">of</span> 0</div>
+        <div class="rlbl">Patients served</div>
+      </div>
+      <div class="result-stat">
+        <div class="rval" id="resWait">0.0m</div>
+        <div class="rlbl">Average wait time</div>
+      </div>
+      <div class="result-stat">
+        <div class="rval" id="resUtil">0%</div>
+        <div class="rlbl">Resource utilization</div>
+      </div>
+      <div class="result-stat">
+        <div class="rval" id="resTriage">100%</div>
+        <div class="rlbl">Critical cases within target</div>
+      </div>
+      <div class="result-stat">
+        <div class="rval" id="resNurseRatio">1 : 0.0</div>
+        <div class="rlbl">Nurse-to-patient ratio <small>(target ≤ 1:4)</small></div>
+      </div>
+      <div class="result-stat">
+        <div class="rval" id="resOffload">0.0m</div>
+        <div class="rlbl">Ambulance offload delay <small>(live, crews still waiting)</small></div>
+      </div>
+    </div>
+    <div class="result-action">
+      <span class="ra-badge" id="resBadge">Idle</span>
+      <span id="resActionText">Press Start to run the simulation and see a live real-world capacity assessment here.</span>
+    </div>
+  </div>
+
+  <footer>MedFlow — Hack-a-Matics 2026 · Pentagram × BMSCE IEEE Computer Society</footer>
 </div>
 
-<!-- COMPARE STRATEGIES MODAL -->
-<div class="modal-back" id="compareModal">
+<!-- COMPARE MODAL -->
+<div class="modal-back" id="modalBack">
   <div class="modal">
-    <button class="ghost close-modal" id="closeModalBtn">✕ Close</button>
-    <h2>Strategy Benchmark Comparison</h2>
-    <div class="sub">Simulated performance across 500 patient synthetic influx cohorts.</div>
-    
-    <div class="compare-block">
-      <h3>1. Adaptive Priority Queue (Current)</h3>
-      <div class="strategy-row">
-        <span class="name">Critical SLA</span>
-        <div class="bar-track"><div class="bar-fill" style="width:96%; background:var(--mint);"></div></div>
-        <span style="color:var(--mint); text-align:right;">96.2%</span>
-      </div>
-      <div class="strategy-row">
-        <span class="name">Starvation</span>
-        <div class="bar-track"><div class="bar-fill" style="width:2%; background:var(--mint);"></div></div>
-        <span style="color:var(--mint); text-align:right;">0.0%</span>
-      </div>
-    </div>
-
-    <div class="compare-block">
-      <h3>2. Strict Urgency Only (No Aging)</h3>
-      <div class="strategy-row">
-        <span class="name">Critical SLA</span>
-        <div class="bar-track"><div class="bar-fill" style="width:88%; background:var(--amber);"></div></div>
-        <span style="color:var(--amber); text-align:right;">88.4%</span>
-      </div>
-      <div class="strategy-row">
-        <span class="name">Starvation</span>
-        <div class="bar-track"><div class="bar-fill" style="width:34%; background:var(--red);"></div></div>
-        <span style="color:var(--red); text-align:right;">34.2%</span>
-      </div>
-    </div>
-
-    <div class="compare-block">
-      <h3>3. Standard FIFO Queue</h3>
-      <div class="strategy-row">
-        <span class="name">Critical SLA</span>
-        <div class="bar-track"><div class="bar-fill" style="width:52%; background:var(--red);"></div></div>
-        <span style="color:var(--red); text-align:right;">52.1%</span>
-      </div>
-      <div class="strategy-row">
-        <span class="name">Starvation</span>
-        <div class="bar-track"><div class="bar-fill" style="width:0%; background:var(--mint);"></div></div>
-        <span style="color:var(--mint); text-align:right;">0.0%</span>
-      </div>
-    </div>
-
-    <table class="compare-table">
-      <thead>
-        <tr><th>Metric / KPI</th><th>Adaptive (Ours)</th><th>Strict Urgency</th><th>FIFO</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Queue Time Complexity</td><td><b>O(log n) Heap</b></td><td>O(log n) Heap</td><td>O(1) Queue</td></tr>
-        <tr><td>Low-Priority Starvation</td><td><b>Prevented via Aging</b></td><td>High Risk</td><td>None</td></tr>
-        <tr><td>Surge Resilience</td><td><b>Robust</b></td><td>Moderate</td><td>Fails under load</td></tr>
-      </tbody>
-    </table>
+    <button class="close-modal ghost" id="closeModal">✕ Close</button>
+    <h2>Strategy comparison</h2>
+    <div class="sub">Same seeded arrival stream (240 simulated minutes) replayed identically under all three scheduling strategies, so the comparison is fair.</div>
+    <div id="compareResults"><div class="empty-note">Running simulations…</div></div>
   </div>
 </div>
-
 <script>
-  // ---------- AUTH & UI STATE ----------
-  const users = {
-    admin: { pass: 'medflow2026', name: 'Hospital Administrator', role: 'admin' },
-    judge: { pass: 'medflow2026', name: 'Evaluating Judge', role: 'judge' }
+(function(){
+"use strict";
+
+/* ======================= SEEDED RNG ======================= */
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+function poissonSample(lambda, rng){
+  if(lambda <= 0) return 0;
+  const L = Math.exp(-lambda);
+  let k = 0, p = 1;
+  do { k++; p *= rng(); } while(p > L);
+  return k - 1;
+}
 
-  let currentRole = 'admin';
-  document.querySelectorAll('.role-card').forEach(card => {
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.role-card').forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
-      currentRole = card.dataset.role;
-      document.getElementById('loginUser').value = currentRole;
-    });
-  });
+/* ======================= DOMAIN MODEL ======================= */
+// Golden-window wait targets per urgency level (minutes)
+const GOLDEN_WINDOW = {5:10, 4:20, 3:45, 2:90, 1:180};
+const DEPT_NAMES = {general:"General", icu:"ICU", or:"OR"};
 
-  document.getElementById('loginForm').addEventListener('submit', e => {
-    e.preventDefault();
-    const u = document.getElementById('loginUser').value.trim().toLowerCase();
-    const p = document.getElementById('loginPass').value;
-    const err = document.getElementById('loginError');
+let PATIENT_ID = 1;
+class Patient{
+  constructor(urgency, dept, arrivalTime, treatDuration){
+    this.id = PATIENT_ID++;
+    this.urgency = urgency;
+    this.dept = dept;
+    this.arrivalTime = arrivalTime;
+    this.treatDuration = treatDuration;
+    this.waitStart = arrivalTime;
+    this.allocStart = null;
+    this.allocEnd = null;
+  }
+}
 
-    if(users[u] && users[u].pass === p) {
-      document.getElementById('loginScreen').style.display = 'none';
-      const app = document.getElementById('appScreen');
-      app.style.display = 'block';
-      setTimeout(() => app.classList.add('visible'), 20);
-      document.getElementById('currentRoleLabel').textContent = users[u].name;
+function pickUrgency(rng){
+  const r = rng();
+  if(r < 0.35) return 1;
+  if(r < 0.65) return 2;
+  if(r < 0.85) return 3;
+  if(r < 0.95) return 4;
+  return 5;
+}
+function pickDept(urgency, rng){
+  // higher urgency skews toward ICU / OR
+  const r = rng();
+  if(urgency >= 4){
+    if(r < 0.55) return "icu";
+    if(r < 0.85) return "or";
+    return "general";
+  }
+  if(urgency === 3){
+    if(r < 0.25) return "icu";
+    if(r < 0.45) return "or";
+    return "general";
+  }
+  if(r < 0.08) return "icu";
+  if(r < 0.15) return "or";
+  return "general";
+}
+function pickDuration(dept, rng){
+  if(dept === "icu") return 180 + rng()*420;   // 3h - 10h
+  if(dept === "or")  return 60 + rng()*150;    // 1h - 3.5h
+  return 45 + rng()*135;                        // 45m - 3h
+}
+
+/* ======================= RESOURCE POOL ======================= */
+class ResourcePool{
+  constructor(cfg){
+    this.total = {general:cfg.general, icu:cfg.icu, or:cfg.or, doctors:cfg.doctors};
+    this.down  = {general:0, icu:0, or:0};       // units temporarily offline
+    this.busy  = {general:0, icu:0, or:0, doctors:0};
+  }
+  freeUnits(dept){ return this.total[dept] - this.down[dept] - this.busy[dept]; }
+  freeDoctors(){ return this.total.doctors - this.busy.doctors; }
+  canAdmit(dept){ return this.freeUnits(dept) > 0 && this.freeDoctors() > 0; }
+  admit(dept){ this.busy[dept]++; this.busy.doctors++; }
+  discharge(dept){ this.busy[dept]--; this.busy.doctors--; }
+}
+
+/* ======================= SCHEDULER / HOSPITAL ======================= */
+class Hospital{
+  constructor(strategy, resourceCfg, rngSeed){
+    this.strategy = strategy;
+    this.pool = new ResourcePool(resourceCfg);
+    this.rng = mulberry32(rngSeed);
+    this.time = 0;               // simulated minutes elapsed
+    this.waiting = [];           // Patient[]
+    this.active = [];            // {patient, dept}
+    this.served = [];            // completed Patient[]
+    this.log = [];
+    // time-weighted utilization integrals
+    this.utilAccum = 0; this.utilTimeBase = 0;
+    this.arrivalRatePerHour = 8;
+    // Triage Efficiency Ratio tracking (urgency >= 4 = "critical")
+    this.criticalArrived = 0;
+    this.criticalStabilized = 0;
+    // NEW — total patients ever arrived (for "Patients Served: X of Y")
+    this.totalArrived = 0;
+    // NEW — physical room/bed slot bookkeeping (display only, mirrors pool.busy counts)
+    this.slotsInUse = {general:new Set(), icu:new Set(), or:new Set()};
+    // NEW — soft resource: ambulances currently out on a transport, auto-freed after a window
+    this.ambulanceBusyUntils = [];
+  }
+
+  score(p){
+    const waited = this.time - p.waitStart;
+    if(this.strategy === "fcfs") return -p.arrivalTime;               // earlier arrival = higher priority
+    if(this.strategy === "urgency") return p.urgency*1000 - p.arrivalTime*0.0001;
+    // adaptive: quadratic urgency + linear aging
+    return 8*p.urgency*p.urgency + 1.5*waited;
+  }
+
+  addLog(msg, cls){
+    const hh = Math.floor(this.time/60)%24, mm = Math.floor(this.time%60);
+    this.log.push({t:`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`, msg, cls});
+    if(this.log.length > 200) this.log.shift();
+  }
+
+  // NEW — assigns a specific, realistic room label to a patient at the moment of admission.
+  // Purely descriptive: it never affects which patient gets seated or when (that's still score()).
+  assignRoom(dept){
+    const total = this.pool.total[dept];
+    const used = this.slotsInUse[dept];
+    let slot = 0;
+    while(used.has(slot) && slot < total) slot++;
+    used.add(slot);
+    const n = slot + 1;
+    let label;
+    if(dept === "icu"){
+      const half = Math.ceil(total/2);
+      const pod = n <= half ? "A" : "B";
+      label = `ICU Pod-${pod} Room ${200 + n}`;
+    } else if(dept === "or"){
+      label = `Trauma Bay ${String(n).padStart(2,'0')}`;
     } else {
-      err.textContent = 'Invalid credentials. Use admin / medflow2026 or judge / medflow2026';
+      label = `General Ward Bed ${n}`;
     }
-  });
-
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-    document.getElementById('appScreen').classList.remove('visible');
-    setTimeout(() => {
-      document.getElementById('appScreen').style.display = 'none';
-      document.getElementById('loginScreen').style.display = 'flex';
-      document.getElementById('loginPass').value = '';
-    }, 400);
-  });
-
-  // ---------- REAL IST CLOCK ----------
-  setInterval(() => {
-    const now = new Date();
-    const formatter = new Intl.DateTimeFormat('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      weekday: 'long',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true
-    });
-    document.getElementById('realClockText').textContent = formatter.format(now) + ' IST';
-  }, 1000);
-
-  // ---------- SIMULATION ENGINE & UI LOGIC ----------
-  let simRunning = false;
-  let simTime = 0; // minutes
-  let speedMultiplier = 1;
-  let arrivalRate = 8; // per hour
-  let strategy = 'adaptive';
-
-  // Capacities
-  const cap = { gen: 20, icu: 6, or: 3, doc: 10, nurse: 14, vent: 6, amb: 3 };
-  let occ = { gen: 0, icu: 0, or: 0, doc: 0, nurse: 0, vent: 0, amb: 0 };
-  let downOR = 0;
-
-  let patientsWaiting = [];
-  let patientsAdmitted = [];
-  let stats = { served: 0, totalWaitSum: 0, criticalTotal: 0, criticalOnTime: 0, history: [] };
-
-  function renderResourceGrids() {
-    // General beds
-    let gHtml = '';
-    for(let i=0; i<cap.gen; i++) {
-      let b = i < occ.gen ? 'busy-general' : '';
-      gHtml += `<div class="unit ${b}"></div>`;
-    }
-    document.getElementById('genBedsGrid').innerHTML = gHtml;
-    document.getElementById('genAvail').textContent = cap.gen - occ.gen;
-
-    // ICU beds
-    let iHtml = '';
-    for(let i=0; i<cap.icu; i++) {
-      let b = i < occ.icu ? 'busy-icu' : '';
-      iHtml += `<div class="unit ${b}"></div>`;
-    }
-    document.getElementById('icuBedsGrid').innerHTML = iHtml;
-    document.getElementById('icuAvail').textContent = cap.icu - occ.icu;
-
-    // OR beds
-    let oHtml = '';
-    for(let i=0; i<cap.or; i++) {
-      let b = '';
-      if(i >= cap.or - downOR) b = 'down';
-      else if(i < occ.or) b = 'busy-or';
-      oHtml += `<div class="unit ${b}"></div>`;
-    }
-    document.getElementById('orBedsGrid').innerHTML = oHtml;
-    document.getElementById('orAvail').textContent = (cap.or - downOR) - occ.or;
-
-    // Doctors
-    let docFree = cap.doc - occ.doc;
-    document.getElementById('docAvail').textContent = docFree;
-    document.getElementById('docFill').style.width = ((docFree / cap.doc) * 100) + '%';
-
-    // Nurses (14)
-    let nHtml = '';
-    for(let i=0; i<cap.nurse; i++) {
-      let b = i < occ.nurse ? 'busy-nurse' : '';
-      nHtml += `<div class="unit ${b}"></div>`;
-    }
-    document.getElementById('nurseGrid').innerHTML = nHtml;
-    document.getElementById('nurseAvail').textContent = cap.nurse - occ.nurse;
-
-    // Ventilators (6)
-    let vHtml = '';
-    for(let i=0; i<cap.vent; i++) {
-      let b = i < occ.vent ? 'busy-vent' : '';
-      vHtml += `<div class="unit ${b}"></div>`;
-    }
-    document.getElementById('ventGrid').innerHTML = vHtml;
-    document.getElementById('ventAvail').textContent = cap.vent - occ.vent;
-
-    // Ambulances (3)
-    let aHtml = '';
-    for(let i=0; i<cap.amb; i++) {
-      let b = i < occ.amb ? 'busy-amb' : '';
-      aHtml += `<div class="unit ${b}"></div>`;
-    }
-    document.getElementById('ambGrid').innerHTML = aHtml;
-    document.getElementById('ambAvail').textContent = cap.amb - occ.amb;
+    return {slot, label};
+  }
+  releaseRoom(dept, slot){
+    if(slot !== undefined && slot !== null) this.slotsInUse[dept].delete(slot);
   }
 
-  function logEvent(msg, type='admit') {
-    const feed = document.getElementById('logFeed');
-    const hrs = String(Math.floor(simTime / 60)).padStart(2,'0');
-    const mins = String(Math.floor(simTime % 60)).padStart(2,'0');
-    feed.innerHTML = `<div><span class="t">[${hrs}:${mins}:00]</span> <span class="${type}">${msg}</span></div>` + feed.innerHTML;
+  // NEW — ambulances: soft resource, consumed on arrival, freed automatically after a transport window.
+  consumeAmbulance(atTime){
+    if(this.ambulanceBusyUntils.length < SOFT_RESOURCES.ambulances){
+      this.ambulanceBusyUntils.push(atTime + 15 + this.rng()*15);
+    }
+  }
+  ambulanceBusy(){ return this.ambulanceBusyUntils.length; }
+  // NEW — nurses & ventilators: soft resources derived from who's currently active, never a blocker.
+  nursesBusy(){ return Math.min(this.active.length, SOFT_RESOURCES.nurses); }
+  ventilatorsBusy(){ return Math.min(this.active.filter(a=>a.dept==="icu").length, SOFT_RESOURCES.ventilators); }
+
+  // NEW — Nurse-to-Patient Ratio: active patients against total staffed nurses (capacity, not just busy count —
+  // this is a staffing-safety signal, so it should be able to show unsafe conditions, e.g. 1:7, not cap out at 1:1).
+  nurseRatio(){
+    const activePatients = this.active.length;
+    if(activePatients === 0) return {perNurse:0, level:"ok"};
+    const perNurse = activePatients / SOFT_RESOURCES.nurses;
+    const level = perNurse > 6 ? "crit" : perNurse > 4 ? "warn" : "ok";
+    return {perNurse, level};
+  }
+  // NEW — Ambulance Offload Delay (proxy): live wait time of patients tagged as ambulance-arrivals who are
+  // STILL in the waiting queue right now — i.e. the crew is still effectively "holding" that patient.
+  // This is a simplified proxy for the real ED metric (crew handoff wait), not a literal separate crew timer.
+  ambulanceOffload(){
+    const waitingAmb = this.waiting.filter(p => p.byAmbulance);
+    if(!waitingAmb.length) return {avg:0, max:0, count:0};
+    let sum=0, max=0;
+    waitingAmb.forEach(p=>{ const w = this.time - p.waitStart; sum += w; if(w > max) max = w; });
+    return {avg: sum/waitingAmb.length, max, count: waitingAmb.length};
   }
 
-  let patientIdCounter = 101;
-  function spawnPatient() {
-    const names = ['Aarav Sharma', 'Priya Patel', 'Rohan Gupta', 'Ananya Iyer', 'Vikram Singh', 'Neha Reddy', 'Karan Verma', 'Diya Nair', 'Amit Joshi', 'Sneha Rao'];
-    const depts = ['Cardiac', 'Trauma', 'Respiratory', 'Neurology', 'General'];
-    const urg = Math.floor(Math.random() * 5) + 1; // 1 to 5
-    const isAmbulance = Math.random() < 0.35;
-    
-    let assignedRoom = 'General Ward Bed ' + Math.floor(Math.random() * 20 + 1);
-    if(urg >= 4) assignedRoom = 'Trauma Bay ' + String(Math.floor(Math.random() * 3 + 1)).padStart(2,'0');
-    else if(urg === 3) assignedRoom = 'ICU Pod-B Room ' + (204 + Math.floor(Math.random() * 3));
-
-    const p = {
-      id: 'P-' + patientIdCounter++,
-      name: names[Math.floor(Math.random() * names.length)],
-      dept: depts[Math.floor(Math.random() * depts.length)],
-      urgency: urg,
-      waitMinutes: 0,
-      room: assignedRoom,
-      isAmbulance: isAmbulance,
-      treatmentTimeRemaining: Math.floor(Math.random() * 15 + 10) // minutes to treat
-    };
-
-    patientsWaiting.push(p);
-    if(urg >= 4) stats.criticalTotal++;
-    logEvent(`New patient ${p.id} (${p.name}) arrived via ${isAmbulance ? 'Ambulance' : 'Walk-in'}. Urgency Level ${urg}.`, 'admit');
+  spawnPatient(urgencyOverride){
+    const urgency = urgencyOverride || pickUrgency(this.rng);
+    const dept = pickDept(urgency, this.rng);
+    const dur = pickDuration(dept, this.rng);
+    const p = new Patient(urgency, dept, this.time, dur);
+    p.byAmbulance = this.rng() < 0.45;   // NEW — tag individual patients so offload delay tracks real arrivals, not just a pool count
+    this.waiting.push(p);
+    if(urgency >= 4) this.criticalArrived++;
+    this.totalArrived++;
+    if(p.byAmbulance) this.consumeAmbulance(this.time);
+    this.addLog(`Patient #${p.id} arrived · urgency ${urgency} · needs ${DEPT_NAMES[dept]}`, "admit");
+    return p;
   }
 
-  function updateSimulation() {
-    if(!simRunning) return;
-    simTime += 0.5 * speedMultiplier;
+  massCasualty(){
+    const n = 8 + Math.floor(this.rng()*8);
+    for(let i=0;i<n;i++){
+      const r = this.rng();
+      const urgency = r < 0.5 ? 5 : (r < 0.85 ? 4 : 3);
+      const p = this.spawnPatient(urgency);
+      if(!p.byAmbulance){ p.byAmbulance = true; this.consumeAmbulance(this.time); } // mass-casualty victims all arrive by ambulance
+    }
+    this.addLog(`⚠ MASS CASUALTY EVENT — ${n} patients incoming`, "event");
+  }
 
-    // Age waiting patients
-    patientsWaiting.forEach(p => p.waitMinutes += 0.5);
+  triggerShortage(minutes){
+    this.pool.total.doctors = Math.max(2, Math.round(this.pool.total.doctors*0.7));
+    this._shortageUntil = this.time + minutes;
+    this.addLog(`⚠ Staff shortage: doctor capacity reduced for ${minutes} min`, "event");
+  }
+  triggerFailure(minutes){
+    this.pool.down.or = Math.min(this.pool.total.or, this.pool.down.or+1);
+    this._failureUntil = this.time + minutes;
+    this.addLog(`⚠ Operating room offline for maintenance (${minutes} min)`, "event");
+  }
 
-    // Sort queue based on strategy
-    if(strategy === 'adaptive') {
-      patientsWaiting.sort((a,b) => {
-        let scoreA = (8 * Math.pow(a.urgency, 2)) + (1.5 * a.waitMinutes);
-        let scoreB = (8 * Math.pow(b.urgency, 2)) + (1.5 * b.waitMinutes);
-        return scoreB - scoreA;
+  stepMinute(dt, forcedArrivals){
+    this.time += dt;
+
+    // NEW — free ambulances whose transport window has ended
+    if(this.ambulanceBusyUntils.length){
+      this.ambulanceBusyUntils = this.ambulanceBusyUntils.filter(t => t > this.time);
+    }
+
+    // resolve timed disruptions
+    if(this._shortageUntil && this.time >= this._shortageUntil){
+      this.pool.total.doctors = this._baseDoctors || this.pool.total.doctors;
+      this._shortageUntil = null;
+      this.addLog("Staff levels restored to normal.", "discharge");
+    }
+    if(this._failureUntil && this.time >= this._failureUntil){
+      this.pool.down.or = Math.max(0, this.pool.down.or-1);
+      this._failureUntil = null;
+      this.addLog("Operating room back online.", "discharge");
+    }
+
+    // arrivals
+    if(forcedArrivals){
+      forcedArrivals.forEach(spec => {
+        const p = new Patient(spec.urgency, spec.dept, this.time, spec.dur);
+        this.waiting.push(p);
+        if(spec.urgency >= 4) this.criticalArrived++;
+        this.totalArrived++;  // NEW
       });
-    } else if(strategy === 'strict') {
-      patientsWaiting.sort((a,b) => b.urgency - a.urgency);
     } else {
-      // FIFO
-      // keep original arrival order
+      const lambda = (this.arrivalRatePerHour/60)*dt;
+      const n = poissonSample(lambda, this.rng);
+      for(let i=0;i<n;i++) this.spawnPatient();
     }
 
-    // Try to admit waiting patients if resources are free
-    let freeGen = cap.gen - occ.gen;
-    let freeIcu = cap.icu - occ.icu;
-    let freeOr = (cap.or - downOR) - occ.or;
-    let freeDoc = cap.doc - occ.doc;
-    let freeNurse = cap.nurse - occ.nurse;
-    let freeVent = cap.vent - occ.vent;
-
-    while(patientsWaiting.length > 0 && freeDoc > 0 && (freeGen > 0 || freeIcu > 0)) {
-      let p = patientsWaiting.shift();
-      // allocate bed & staff
-      if(p.urgency >= 4 && freeIcu > 0 && freeVent > 0) {
-        occ.icu++; occ.vent++; occ.doc++; occ.nurse = Math.min(cap.nurse, occ.nurse + 2);
-        p.assignedResource = 'ICU + Ventilator';
-      } else if(freeGen > 0) {
-        occ.gen++; occ.doc++; occ.nurse = Math.min(cap.nurse, occ.nurse + 1);
-        p.assignedResource = 'General Bed + Nurse';
-      } else {
-        // put back if no resource
-        patientsWaiting.unshift(p);
-        break;
+    // completions
+    this.active = this.active.filter(a => {
+      if(this.time >= a.patient.allocEnd){
+        this.pool.discharge(a.dept);
+        this.releaseRoom(a.dept, a.patient.roomSlot);  // NEW
+        this.served.push(a.patient);
+        if(a.patient.urgency >= 4){
+          const wait = a.patient.allocStart - a.patient.arrivalTime;
+          if(wait <= GOLDEN_WINDOW[a.patient.urgency]) this.criticalStabilized++;
+        }
+        this.addLog(`Patient #${a.patient.id} discharged from ${DEPT_NAMES[a.dept]}`, "discharge");
+        return false;
       }
-
-      patientsAdmitted.push(p);
-      stats.served++;
-      stats.totalWaitSum += p.waitMinutes;
-      if(p.urgency >= 4 && p.waitMinutes <= 20) stats.criticalOnTime++;
-      logEvent(`Patient ${p.id} admitted to ${p.room} (${p.assignedResource}). Wait: ${p.waitMinutes.toFixed(1)}m`, 'admit');
-      
-      freeGen = cap.gen - occ.gen;
-      freeIcu = cap.icu - occ.icu;
-      freeDoc = cap.doc - occ.doc;
-    }
-
-    // Progress admitted patients treatment
-    patientsAdmitted.forEach(p => p.treatmentTimeRemaining -= 0.5);
-    let newlyDischarged = patientsAdmitted.filter(p => p.treatmentTimeRemaining <= 0);
-    patientsAdmitted = patientsAdmitted.filter(p => p.treatmentTimeRemaining > 0);
-
-    newlyDischarged.forEach(p => {
-      if(p.assignedResource && p.assignedResource.includes('ICU')) {
-        occ.icu = Math.max(0, occ.icu - 1);
-        occ.vent = Math.max(0, occ.vent - 1);
-      } else {
-        occ.gen = Math.max(0, occ.gen - 1);
-      }
-      occ.doc = Math.max(0, occ.doc - 1);
-      occ.nurse = Math.max(0, occ.nurse - 2);
-      logEvent(`Patient ${p.id} discharged from ${p.room}. Resources freed.`, 'discharge');
+      return true;
     });
 
-    // Random arrivals based on arrival rate
-    if(Math.random() < (arrivalRate / 120) * speedMultiplier) {
-      spawnPatient();
+    // allocation pass — sort waiting by live priority score, try to seat each
+    this.waiting.sort((a,b) => this.score(b) - this.score(a));
+    const stillWaiting = [];
+    for(const p of this.waiting){
+      if(this.pool.canAdmit(p.dept)){
+        this.pool.admit(p.dept);
+        p.allocStart = this.time;
+        p.allocEnd = this.time + p.treatDuration;
+        const roomInfo = this.assignRoom(p.dept);   // NEW — decision already made above; this only labels it
+        p.roomLabel = roomInfo.label;
+        p.roomSlot = roomInfo.slot;
+        this.active.push({patient:p, dept:p.dept});
+        this.addLog(`Patient #${p.id} admitted to ${roomInfo.label} (waited ${(this.time-p.waitStart).toFixed(0)}m)`, "admit");
+      } else {
+        stillWaiting.push(p);
+      }
     }
+    this.waiting = stillWaiting;
 
-    renderUI();
+    // utilization integral (time-weighted, across all three unit types)
+    const busySum = this.pool.busy.general + this.pool.busy.icu + this.pool.busy.or;
+    const capSum  = (this.pool.total.general - this.pool.down.general) +
+                     (this.pool.total.icu - this.pool.down.icu) +
+                     (this.pool.total.or - this.pool.down.or);
+    this.utilAccum += busySum*dt;
+    this.utilTimeBase += Math.max(capSum,1)*dt;
   }
 
-  function renderUI() {
-    // Waiting queue render
-    const wList = document.getElementById('waitingQueueList');
-    document.getElementById('waitingCountLabel').textContent = `${patientsWaiting.length} waiting`;
-    if(patientsWaiting.length === 0) {
-      wList.innerHTML = `<div class="empty-note">Queue is empty — all clear.</div>`;
-    } else {
-      wList.innerHTML = patientsWaiting.map((p, idx) => `
-        <div class="qcard ${idx === 0 ? 'top' : ''}">
-          <div class="u-badge u${p.urgency}">U${p.urgency}</div>
-          <div class="id">${p.id}</div>
-          <div class="dept">${p.dept}</div>
-          <div class="room">📍 ${p.room}</div>
-          <div class="wait">
-            <span class="m">${p.waitMinutes.toFixed(1)}m</span>
-            <span class="lbl">Wait time</span>
-          </div>
-        </div>
-      `).join('');
-    }
+  /* ---------- metrics ---------- */
+  weightedWaitTime(){
+    const pool = this.served.length ? this.served : [];
+    if(!pool.length) return 0;
+    let num=0, den=0;
+    pool.forEach(p=>{
+      const wait = p.allocStart - p.arrivalTime;
+      num += p.urgency*wait; den += p.urgency;
+    });
+    return den ? num/den : 0;
+  }
+  // Triage Efficiency Ratio = (Stabilized Critical Cases / Total Critical Influx) × 100
+  triageEfficiency(){
+    return this.criticalArrived ? (this.criticalStabilized/this.criticalArrived)*100 : 100;
+  }
+  // Weighted Wait-Time Penalty: live systemic cost currently sitting in the queue.
+  // Penalty(p) = urgency × waitMinutes — urgency multiplies the cost of every minute waited.
+  livePenalty(){
+    return this.waiting.reduce((sum,p)=> sum + p.urgency*(this.time-p.waitStart), 0);
+  }
+  // Proof that aging prevents starvation: the longest anyone is currently waiting.
+  longestWait(){
+    let best = null;
+    this.waiting.forEach(p=>{
+      const w = this.time - p.waitStart;
+      if(!best || w > best.wait) best = {urgency:p.urgency, wait:w, id:p.id};
+    });
+    return best;
+  }
+  utilizationRate(){
+    return this.utilTimeBase ? (this.utilAccum/this.utilTimeBase)*100 : 0;
+  }
+  maxWaitForUrgency(level){
+    let mx = 0;
+    this.served.forEach(p=>{ if(p.urgency===level) mx = Math.max(mx, p.allocStart-p.arrivalTime); });
+    return mx;
+  }
+}
 
-    // Admitted render
-    const aList = document.getElementById('admittedList');
-    document.getElementById('admittedCountLabel').textContent = `${patientsAdmitted.length} active`;
-    if(patientsAdmitted.length === 0) {
-      aList.innerHTML = `<div class="empty-note" style="padding:10px;">No patients currently admitted.</div>`;
-    } else {
-      aList.innerHTML = patientsAdmitted.map(p => `
-        <div class="qcard acard">
-          <div class="u-badge u${p.urgency}">U${p.urgency}</div>
-          <div class="id">${p.id}</div>
-          <div class="room">🛏️ ${p.room}</div>
-          <div class="wait">
-            <span class="m">${Math.ceil(p.treatmentTimeRemaining)}m left</span>
-            <span class="lbl">Treatment</span>
-          </div>
-        </div>
-      `).join('');
-    }
+/* ======================= LIVE UI WIRING ======================= */
+const RESOURCE_CFG = {general:20, icu:6, or:3, doctors:10};
+const SOFT_RESOURCES = {nurses:14, ventilators:6, ambulances:3}; // NEW — derived/display-only, never gates admission
+let hospital = new Hospital("adaptive", RESOURCE_CFG, 12345);
+hospital._baseDoctors = RESOURCE_CFG.doctors;
 
-    renderResourceGrids();
+let running = false, speed = 2, rafId = null, lastTs = null, accumMs = 0;
+const TICK_MS = 220; // real ms per simulated-minute tick at speed=1
+const chartData = []; // {t, wwt, util, triage}
 
-    // KPIs & Results box
-    let avgWait = stats.served > 0 ? (stats.totalWaitSum / stats.served).toFixed(1) : '0.0';
-    let triageEff = stats.criticalTotal > 0 ? Math.round((stats.criticalOnTime / stats.criticalTotal) * 100) : 100;
-    let totalCap = cap.gen + cap.icu + cap.or;
-    let totalOcc = occ.gen + occ.icu + occ.or;
-    let utilPct = Math.round((totalOcc / totalCap) * 100);
+const el = id => document.getElementById(id);
 
-    document.getElementById('kpiWait').textContent = avgWait;
-    document.getElementById('kpiTriage').textContent = triageEff + '%';
-    document.getElementById('kpiUtil').textContent = utilPct + '%';
-    document.getElementById('kpiServed').textContent = stats.served;
+/* ======================= AUTHENTICATION (demo-only, client-side) ======================= */
+const DEMO_ACCOUNTS = {
+  admin: {password:"medflow2026", role:"Hospital Administrator"},
+  judge: {password:"medflow2026", role:"Evaluating Judge"}
+};
+let selectedRole = "admin";
+function selectRole(role){
+  selectedRole = role;
+  el("roleAdminCard").classList.toggle("active", role==="admin");
+  el("roleJudgeCard").classList.toggle("active", role==="judge");
+  el("loginUser").placeholder = role;
+  el("loginError").textContent = "";
+}
+el("roleAdminCard").addEventListener("click", ()=>selectRole("admin"));
+el("roleJudgeCard").addEventListener("click", ()=>selectRole("judge"));
 
-    // Result panel metrics
-    document.getElementById('resServedVal').innerHTML = `${stats.served} <span class="of">of</span> ${stats.served + patientsWaiting.length}`;
-    document.getElementById('resWaitVal').textContent = avgWait + 'm';
-    document.getElementById('resUtilSub').textContent = utilPct + '% utilized';
-    document.getElementById('resTriageVal').textContent = triageEff + '%';
-    document.getElementById('resUnassignedVal').textContent = patientsWaiting.filter(p => p.urgency >= 4 && p.waitMinutes > 15).length;
+el("loginForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const uname = el("loginUser").value.trim().toLowerCase();
+  const pwd = el("loginPass").value;
+  const account = DEMO_ACCOUNTS[selectedRole];
+  const errEl = el("loginError");
+  if(uname !== selectedRole || pwd !== account.password){
+    errEl.textContent = "Invalid credentials for the selected role — check the demo access panel below.";
+    return;
+  }
+  errEl.textContent = "";
+  showApp(account.role);
+});
 
-    // Nurse ratio (active patients vs 14 staff)
-    let activePatients = patientsWaiting.length + patientsAdmitted.length;
-    let ratioVal = (activePatients / 14).toFixed(1);
-    document.getElementById('resNurseRatioVal').textContent = `1 : ${ratioVal}`;
-
-    // Ambulance offload delay calculation
-    let ambWaiting = patientsWaiting.filter(p => p.isAmbulance);
-    let avgAmbWait = ambWaiting.length > 0 ? (ambWaiting.reduce((acc,curr) => acc + curr.waitMinutes, 0) / ambWaiting.length).toFixed(1) : '0.0';
-    document.getElementById('resAmbulanceDelayVal').textContent = avgAmbWait + 'm';
-
-    // Recommendation card state
-    const badge = document.getElementById('recomBadge');
-    const recText = document.getElementById('recomText');
-    if(utilPct > 85 || activePatients > 15) {
-      badge.className = 'ra-badge crit';
-      badge.textContent = 'High Load';
-      recText.textContent = `Surge detected. Active load is pushing nurse ratio to 1:${ratioVal}. Recommend dispatching secondary triage staff to ICU Pod-B.`;
-    } else if(utilPct > 60) {
-      badge.className = 'ra-badge warn';
-      badge.textContent = 'Moderate';
-      recText.textContent = `Steady influx. Ambulance offload delay averaging ${avgAmbWait}m. Priority queue aging is actively preventing starvation.`;
-    } else {
-      badge.className = 'ra-badge ok';
-      badge.textContent = 'Optimal';
-      recText.textContent = `System running within safe clinical parameters. Priority queue and binary-heap allocation operating at peak efficiency.`;
-    }
-
-    // Canvas chart draw
+function showApp(roleLabel){
+  el("loginScreen").style.display = "none";
+  const app = el("appScreen");
+  app.style.display = "block";
+  el("sessionRole").textContent = roleLabel;
+  requestAnimationFrame(()=>{
+    app.classList.add("visible");
+    render();       // re-render now that panels are actually visible (fixes canvas sizing)
     drawChart();
+  });
+}
+
+function logout(){
+  running = false;
+  if(rafId) cancelAnimationFrame(rafId);
+  el("playBtn").textContent = "▶ Start";
+  el("statusPill").classList.remove("running");
+  el("statusText").textContent = "Paused";
+  el("appScreen").classList.remove("visible");
+  setTimeout(()=>{
+    el("appScreen").style.display = "none";
+    el("loginScreen").style.display = "flex";
+    el("loginPass").value = "";
+    el("loginError").textContent = "";
+  }, 350);
+}
+el("logoutBtn").addEventListener("click", logout);
+
+const bedGrid = el("bedGrid"), icuGrid = el("icuGrid"), orGrid = el("orGrid");
+const nurseGrid = el("nurseGrid"), ventGrid = el("ventGrid"), ambGrid = el("ambGrid");
+
+function buildGrids(){
+  bedGrid.innerHTML = Array.from({length:RESOURCE_CFG.general}).map(()=>`<div class="unit"></div>`).join("");
+  icuGrid.innerHTML = Array.from({length:RESOURCE_CFG.icu}).map(()=>`<div class="unit"></div>`).join("");
+  orGrid.innerHTML  = Array.from({length:RESOURCE_CFG.or}).map(()=>`<div class="unit"></div>`).join("");
+  nurseGrid.innerHTML = Array.from({length:SOFT_RESOURCES.nurses}).map(()=>`<div class="unit"></div>`).join("");
+  ventGrid.innerHTML  = Array.from({length:SOFT_RESOURCES.ventilators}).map(()=>`<div class="unit"></div>`).join("");
+  ambGrid.innerHTML   = Array.from({length:SOFT_RESOURCES.ambulances}).map(()=>`<div class="unit"></div>`).join("");
+}
+buildGrids();
+
+function renderResources(){
+  const p = hospital.pool;
+  el("bedAvail").textContent = p.freeUnits("general");
+  el("icuAvail").textContent = p.freeUnits("icu");
+  el("orAvail").textContent  = p.freeUnits("or");
+  el("docAvail").textContent = p.freeDoctors();
+  el("docTotal").textContent = p.total.doctors;
+  el("docFill").style.width = `${(p.busy.doctors/p.total.doctors)*100}%`;
+
+  paintGrid(bedGrid, p.total.general, p.busy.general, p.down.general, "busy-general");
+  paintGrid(icuGrid, p.total.icu, p.busy.icu, p.down.icu, "busy-icu");
+  paintGrid(orGrid, p.total.or, p.busy.or, p.down.or, "busy-or");
+
+  // NEW — nurses, ventilators, ambulances: derived/display-only, never gate admission
+  const nurseBusy = hospital.nursesBusy(), ventBusy = hospital.ventilatorsBusy(), ambBusy = hospital.ambulanceBusy();
+  el("nurseAvail").textContent = SOFT_RESOURCES.nurses - nurseBusy;
+  el("ventAvail").textContent  = SOFT_RESOURCES.ventilators - ventBusy;
+  el("ambAvail").textContent   = SOFT_RESOURCES.ambulances - ambBusy;
+  paintGrid(nurseGrid, SOFT_RESOURCES.nurses, nurseBusy, 0, "busy-nurse");
+  paintGrid(ventGrid, SOFT_RESOURCES.ventilators, ventBusy, 0, "busy-vent");
+  paintGrid(ambGrid, SOFT_RESOURCES.ambulances, ambBusy, 0, "busy-amb");
+
+  let statusMsgs = [];
+  if(hospital._shortageUntil) statusMsgs.push("Staff shortage active");
+  if(hospital._failureUntil) statusMsgs.push("OR offline");
+  el("eventStatus").textContent = statusMsgs.length ? statusMsgs.join(" · ") : "No active disruptions.";
+}
+function paintGrid(gridEl, total, busy, down, cls){
+  const units = gridEl.children;
+  for(let i=0;i<total;i++){
+    const u = units[i]; if(!u) continue;
+    u.className = "unit";
+    if(i < down) u.classList.add("down");
+    else if(i < down+busy) u.classList.add(cls);
+  }
+}
+
+function renderQueue(){
+  const list = el("queueList");
+  el("queueCount").textContent = `${hospital.waiting.length} waiting`;
+  if(!hospital.waiting.length){
+    list.innerHTML = `<div class="empty-note">Queue is empty — all clear.</div>`;
+  } else {
+    const sorted = [...hospital.waiting].sort((a,b)=>hospital.score(b)-hospital.score(a)).slice(0,60);
+    list.innerHTML = sorted.map((p,i)=>{
+      const wait = Math.round(hospital.time - p.waitStart);
+      return `<div class="qcard ${i===0?'top':''}">
+        <div class="u-badge u${p.urgency}">${p.urgency}</div>
+        <div class="id">#${p.id}</div>
+        <div class="dept">${DEPT_NAMES[p.dept]}</div>
+        <div class="wait"><span class="m">${wait}m</span><span class="lbl">waiting</span></div>
+      </div>`;
+    }).join("");
   }
 
-  function drawChart() {
-    const canvas = document.getElementById('perfCanvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // NEW — In treatment: admitted patients with their assigned real-world room number
+  const aList = el("admittedList");
+  el("admittedCount").textContent = `${hospital.active.length} active`;
+  if(!hospital.active.length){
+    aList.innerHTML = `<div class="empty-note">No patients currently admitted.</div>`;
+  } else {
+    aList.innerHTML = hospital.active.slice(0,60).map(a=>{
+      const remaining = Math.max(0, Math.round(a.patient.allocEnd - hospital.time));
+      return `<div class="qcard acard">
+        <div class="u-badge u${a.patient.urgency}">${a.patient.urgency}</div>
+        <div class="id">#${a.patient.id}</div>
+        <div class="room">${a.patient.roomLabel || "—"}</div>
+        <div class="wait"><span class="m">${remaining}m</span><span class="lbl">remaining</span></div>
+      </div>`;
+    }).join("");
+  }
+}
 
-    // Push data point to history
-    let avgWait = stats.served > 0 ? stats.totalWaitSum / stats.served : 0;
-    let totalCap = cap.gen + cap.icu + cap.or;
-    let utilPct = ((occ.gen + occ.icu + occ.or) / totalCap) * 100;
-    let triageEff = stats.criticalTotal > 0 ? (stats.criticalOnTime / stats.criticalTotal) * 100 : 100;
+function renderKPIs(){
+  const wwt = hospital.weightedWaitTime();
+  const triage = hospital.triageEfficiency();
+  const util = hospital.utilizationRate();
+  el("kpiWWT").textContent = wwt.toFixed(1);
+  el("kpiTriage").textContent = triage.toFixed(0)+"%";
+  el("kpiTriage").className = "val " + (triage>=85?"":triage>=60?"warn":"crit");
+  el("kpiUtil").textContent = util.toFixed(0)+"%";
+  el("kpiUtil").className = "val " + (util<=90?"":"warn");
+  el("kpiServed").textContent = hospital.served.length;
 
-    stats.history.push({ w: avgWait, u: utilPct, t: triageEff });
-    if(stats.history.length > 30) stats.history.shift();
+  chartData.push({t:hospital.time, wwt, util, triage});
+  if(chartData.length > 240) chartData.shift();
+  drawChart();
+}
 
-    if(stats.history.length < 2) return;
+function renderLog(){
+  const feed = el("logFeed");
+  const recent = hospital.log.slice(-60);
+  feed.innerHTML = recent.map(l=>`<div><span class="t">${l.t}</span><span class="${l.cls}">${l.msg}</span></div>`).join("");
+  feed.scrollTop = feed.scrollHeight;
+}
 
-    const w = canvas.width;
-    const h = canvas.height;
-    const step = w / (stats.history.length - 1);
+function renderClock(){
+  const totalMin = Math.floor(hospital.time);
+  const day = Math.floor(totalMin/1440)+1;
+  const hh = Math.floor((totalMin%1440)/60), mm = totalMin%60;
+  el("clockDisplay").textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  el("clockSub").textContent = `Day ${day} · Simulated hospital time`;
+}
 
-    // Draw lines
-    function drawLine(key, color, maxVal) {
-      ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      stats.history.forEach((pt, i) => {
-        let x = i * step;
-        let y = h - (pt[key] / maxVal) * (h - 10) - 5;
-        if(i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.stroke();
-    }
+/* ---------- canvas chart ---------- */
+const canvas = el("chartCanvas");
+const CHART_HEIGHT = 150; // fixed logical (CSS) pixel height — never derive the next size from canvas.height itself
+function drawChart(){
+  const dpr = window.devicePixelRatio||1;
+  const w = canvas.clientWidth, h = CHART_HEIGHT;
+  const targetW = Math.max(1, Math.round(w*dpr));
+  const targetH = Math.round(h*dpr);
+  // Only touch the backing store when the size genuinely changed (e.g. window resize).
+  // Resizing every tick both re-triggers the compounding bug and causes a visible flash/clear.
+  if(canvas.width !== targetW || canvas.height !== targetH){
+    canvas.width = targetW;
+    canvas.height = targetH;
+  }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  if(chartData.length < 2) return;
 
-    drawLine('w', '#6EE7B5', 30); // wait time max ~30m
-    drawLine('u', '#F2B134', 100); // utilization max 100%
-    drawLine('t', '#E4572E', 100); // triage max 100%
+  const maxWWT = Math.max(30, ...chartData.map(d=>d.wwt));
+  function plot(key, max, color){
+    ctx.beginPath();
+    chartData.forEach((d,i)=>{
+      const x = (i/(chartData.length-1))*w;
+      const y = h - (Math.min(d[key],max)/max)*h*0.92 - 4;
+      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.stroke();
+  }
+  plot("wwt", maxWWT, "#6EE7B5");
+  plot("util", 100, "#F2B134");
+  plot("triage", 100, "#E4572E");
+}
+
+function renderMath(){
+  // Priority score worked example — the actual patient currently at the front of the queue.
+  const sorted = [...hospital.waiting].sort((a,b)=>hospital.score(b)-hospital.score(a));
+  const top = sorted[0];
+  if(top && hospital.strategy === "adaptive"){
+    const waited = Math.round(hospital.time - top.waitStart);
+    const term1 = 8*top.urgency*top.urgency;
+    const term2 = 1.5*waited;
+    el("mfPriority").innerHTML =
+      `Patient #${top.id} · urgency ${top.urgency}, waited ${waited}m<br>`+
+      `P = 8×${top.urgency}&sup2; + 1.5×${waited} = <b>${term1}</b> + <b>${term2.toFixed(1)}</b> = <b>${(term1+term2).toFixed(1)}</b>`;
+  } else if(top){
+    el("mfPriority").innerHTML = `Current strategy is "${hospital.strategy}" — switch to Adaptive to see the aging formula applied live.`;
+  } else {
+    el("mfPriority").textContent = "Queue is empty — no patient to score right now.";
   }
 
-  // ---------- BUTTON LISTENERS ----------
-  document.getElementById('startBtn').addEventListener('click', () => {
-    simRunning = !simRunning;
-    const btn = document.getElementById('startBtn');
-    const pill = document.querySelector('.status-pill');
-    if(simRunning) {
-      btn.textContent = '⏸ Pause';
-      btn.className = 'ghost';
-      if(pill) { pill.className = 'status-pill running'; pill.innerHTML = '<div class="dot"></div>Live simulation connected'; }
-      logEvent('Simulation started.', 'admit');
-    } else {
-      btn.textContent = '▶ Start';
-      btn.className = 'primary';
-      if(pill) { pill.className = 'status-pill'; pill.innerHTML = '<div class="dot"></div>Paused'; }
-      logEvent('Simulation paused.', 'event');
+  // Live systemic penalty accruing in the queue right now.
+  const penalty = hospital.livePenalty();
+  el("mfPenalty").innerHTML = hospital.waiting.length
+    ? `Current system penalty = <b>${penalty.toFixed(0)}</b> urgency·minutes across ${hospital.waiting.length} waiting patient(s)`
+    : `Queue is empty — system penalty is 0.`;
+
+  // Triage Efficiency Ratio, exact formula.
+  el("mfTriage").innerHTML = hospital.criticalArrived
+    ? `${hospital.criticalStabilized} stabilized &divide; ${hospital.criticalArrived} critical arrivals = <b>${hospital.triageEfficiency().toFixed(0)}%</b>`
+    : `No urgency-4/5 patients have arrived yet.`;
+
+  // Aging proof: longest current wait, to show starvation isn't happening.
+    // Aging proof: longest current wait, to show starvation isn't happening.
+  const lw = hospital.longestWait();
+  el("mfAgingNote").innerHTML = lw
+    ? `Longest anyone is currently waiting: <b>${lw.wait.toFixed(0)}m</b> (patient #${lw.id}, urgency ${lw.urgency}) — aging keeps this bounded even under sustained Level-5 pressure, so no patient is neglected indefinitely.`
+    : `Longest anyone is currently waiting: <b>none</b> — queue is empty.`;
+}
+
+// NEW — plain-language, threshold-based read of the live metrics against commonly-cited
+// hospital operations benchmarks (roughly 70–85% utilization, >85% critical-target compliance
+// is the range typically used for ED capacity planning). This is intentionally simple —
+// it doesn't change any scheduling decision, it just narrates the numbers already computed above.
+function recommendedAction(util, triage, hasCritical){
+  if(util >= 92){
+    return {level:"crit", badge:"Surge risk",
+      text:`Utilization is at ${util.toFixed(0)}% — real EDs typically activate surge or ambulance-diversion protocols above ~90% occupancy. Recommended action: open overflow capacity or divert non-critical transfers.`};
+  }
+  if(hasCritical && triage < 70){
+    return {level:"crit", badge:"Triage risk",
+      text:`Only ${triage.toFixed(0)}% of critical patients are meeting their golden-window target — below a safe threshold. Recommended action: reallocate staff toward ICU/trauma throughput or request mutual aid.`};
+  }
+  if(util >= 75 || (hasCritical && triage < 85)){
+    return {level:"warn", badge:"Watch",
+      text:`Running at ${util.toFixed(0)}% utilization with ${triage.toFixed(0)}% critical-target compliance — inside the high-load zone hospitals plan capacity around. Worth watching if arrivals keep climbing.`};
+  }
+  return {level:"ok", badge:"Stable",
+    text:`Utilization (${util.toFixed(0)}%) and critical-target compliance (${triage.toFixed(0)}%) sit within the range commonly cited as a well-run department's operating benchmark.`};
+}
+
+function renderResult(){
+  const served = hospital.served.length;
+  const totalArrived = hospital.totalArrived;
+  const wwt = hospital.weightedWaitTime();
+  const util = hospital.utilizationRate();
+  const triage = hospital.triageEfficiency();
+
+  el("resServed").innerHTML = `${served} <span class="of">of</span> ${totalArrived}`;
+  el("resWait").textContent = wwt.toFixed(1)+"m";
+  el("resUtil").textContent = util.toFixed(0)+"%";
+  el("resTriage").textContent = triage.toFixed(0)+"%";
+
+  // NEW — Nurse-to-Patient Ratio
+  const nr = hospital.nurseRatio();
+  const nrEl = el("resNurseRatio");
+  nrEl.textContent = `1 : ${nr.perNurse.toFixed(1)}`;
+  nrEl.className = "rval " + (nr.level==="ok" ? "" : nr.level);
+
+  // NEW — Ambulance Offload Delay (live)
+  const ao = hospital.ambulanceOffload();
+  const aoEl = el("resOffload");
+  aoEl.textContent = ao.count ? `${ao.avg.toFixed(1)}m` : "0.0m";
+  aoEl.className = "rval " + (ao.avg > 30 ? "crit" : ao.avg > 15 ? "warn" : "");
+
+  const action = recommendedAction(util, triage, hospital.criticalArrived > 0);
+  const badgeEl = el("resBadge");
+  badgeEl.textContent = action.badge;
+  badgeEl.className = "ra-badge " + action.level;
+  el("resActionText").textContent = action.text;
+}
+
+/* ---------- main loop ---------- */
+function render(){ renderClock(); renderResources(); renderQueue(); renderKPIs(); renderLog(); renderMath(); renderResult(); }
+
+function flashChaos(){
+  document.body.classList.add('chaos-flash');
+  setTimeout(()=> document.body.classList.remove('chaos-flash'), 900);
+}
+
+function loop(ts){
+  if(!running) return;
+  if(lastTs===null) lastTs = ts;
+  const dtMs = ts - lastTs; lastTs = ts;
+  accumMs += dtMs*speed;
+  let steps = 0;
+  while(accumMs >= TICK_MS && steps < 40){
+    hospital.stepMinute(1);
+    accumMs -= TICK_MS;
+    steps++;
+  }
+  if(steps>0) render();
+  rafId = requestAnimationFrame(loop);
+}
+
+el("playBtn").addEventListener("click", ()=>{
+  running = !running;
+  el("playBtn").textContent = running ? "⏸ Pause" : "▶ Start";
+  const pill = el("statusPill");
+  pill.classList.toggle("running", running);
+  el("statusText").textContent = running ? "Running" : "Paused";
+  if(running){ lastTs=null; rafId = requestAnimationFrame(loop); }
+  else cancelAnimationFrame(rafId);
+});
+
+el("resetBtn").addEventListener("click", ()=>{
+  running = false; cancelAnimationFrame(rafId);
+  el("playBtn").textContent = "▶ Start";
+  el("statusPill").classList.remove("running");
+  el("statusText").textContent = "Paused";
+  const strategy = el("strategySelect").value;
+  hospital = new Hospital(strategy, RESOURCE_CFG, Math.floor(Math.random()*1e6));
+  hospital._baseDoctors = RESOURCE_CFG.doctors;
+  hospital.arrivalRatePerHour = Number(el("rateSlider").value);
+  chartData.length = 0;
+  buildGrids();
+  render();
+});
+
+el("speedSlider").addEventListener("input", e=>{
+  speed = Number(e.target.value);
+  el("speedVal").textContent = "x"+speed;
+});
+el("rateSlider").addEventListener("input", e=>{
+  hospital.arrivalRatePerHour = Number(e.target.value);
+  el("rateVal").textContent = e.target.value+"/hr";
+});
+el("strategySelect").addEventListener("change", e=>{
+  hospital.strategy = e.target.value;
+  hospital.addLog(`Scheduling strategy switched to "${e.target.options[e.target.selectedIndex].text}"`, "event");
+});
+el("mciBtn").addEventListener("click", ()=>{ hospital.massCasualty(); flashChaos(); render(); });
+el("shortageBtn").addEventListener("click", ()=>{ hospital.triggerShortage(60); flashChaos(); render(); });
+el("failureBtn").addEventListener("click", ()=>{ hospital.triggerFailure(45); flashChaos(); render(); });
+
+/* ======================= STRATEGY COMPARISON ======================= */
+function generateArrivalPlan(seed, durationMin, ratePerHour){
+  const rng = mulberry32(seed);
+  const plan = []; // per-minute arrays
+  for(let t=0;t<durationMin;t++){
+    const lambda = ratePerHour/60;
+    const n = poissonSample(lambda, rng);
+    const specs = [];
+    for(let i=0;i<n;i++){
+      const urgency = pickUrgency(rng);
+      const dept = pickDept(urgency, rng);
+      const dur = pickDuration(dept, rng);
+      specs.push({urgency, dept, dur});
     }
-  });
+    plan.push(specs);
+  }
+  return plan;
+}
 
-  document.getElementById('resetBtn').addEventListener('click', () => {
-    simRunning = false;
-    simTime = 0;
-    patientsWaiting = [];
-    patientsAdmitted = [];
-    occ = { gen: 0, icu: 0, or: 0, doc: 0, nurse: 0, vent: 0, amb: 0 };
-    downOR = 0;
-    stats = { served: 0, totalWaitSum: 0, criticalTotal: 0, criticalOnTime: 0, history: [] };
-    document.getElementById('startBtn').textContent = '▶ Start';
-    document.getElementById('startBtn').className = 'primary';
-    document.getElementById('activeDisruptionsNote').textContent = 'No active disruptions. System operating at nominal capacity.';
-    logEvent('Simulation state reset.', 'event');
-    renderUI();
-  });
+function runOffline(strategy, plan, resourceCfg){
+  const h = new Hospital(strategy, resourceCfg, 1);
+  for(let t=0;t<plan.length;t++){
+    h.stepMinute(1, plan[t]);
+  }
+  return {
+    strategy,
+    wwt: h.weightedWaitTime(),
+    triage: h.triageEfficiency(),
+    util: h.utilizationRate(),
+    served: h.served.length,
+    maxWaitU1: h.maxWaitForUrgency(1),
+    maxWaitU5: h.maxWaitForUrgency(5)
+  };
+}
 
-  document.getElementById('speedRange').addEventListener('input', e => {
-    speedMultiplier = parseFloat(e.target.value);
-    document.getElementById('speedVal').textContent = speedMultiplier.toFixed(1) + 'x';
-  });
+el("compareBtn").addEventListener("click", ()=>{
+  el("modalBack").classList.add("show");
+  el("compareResults").innerHTML = `<div class="empty-note">Running simulations…</div>`;
+  setTimeout(()=>{
+    const duration = 240;
+    const rate = Number(el("rateSlider").value);
+    const plan = generateArrivalPlan(999, duration, rate);
+    const results = ["adaptive","urgency","fcfs"].map(s => runOffline(s, plan, RESOURCE_CFG));
+    renderCompare(results);
+  }, 30);
+});
+el("closeModal").addEventListener("click", ()=> el("modalBack").classList.remove("show"));
+el("modalBack").addEventListener("click", e=>{ if(e.target.id==="modalBack") el("modalBack").classList.remove("show"); });
 
-  document.getElementById('arrivalRange').addEventListener('input', e => {
-    arrivalRate = parseInt(e.target.value);
-    document.getElementById('arrivalVal').textContent = arrivalRate + '/hr';
-  });
+const STRAT_LABEL = {adaptive:"Adaptive priority", urgency:"Urgency-only", fcfs:"FCFS"};
+const STRAT_COLOR = {adaptive:"#6EE7B5", urgency:"#F2B134", fcfs:"#7EA8E0"};
 
-  document.getElementById('strategySelect').addEventListener('change', e => {
-    strategy = e.target.value;
-    logEvent(`Triage queuing strategy switched to: ${e.target.options[e.target.selectedIndex].text}`, 'event');
-  });
+function renderCompare(results){
+  function block(title, key, max, suffix){
+    const rows = results.map(r=>{
+      const v = r[key];
+      const pct = Math.min(100,(v/max)*100);
+      return `<div class="strategy-row">
+        <div class="name" style="color:${STRAT_COLOR[r.strategy]}">${STRAT_LABEL[r.strategy]}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${STRAT_COLOR[r.strategy]}"></div></div>
+        <div style="text-align:right">${v.toFixed(1)}${suffix}</div>
+      </div>`;
+    }).join("");
+    return `<div class="compare-block"><h3>${title}</h3>${rows}</div>`;
+  }
+  const html = `
+    ${block("Weighted wait time — lower is better", "wwt", Math.max(...results.map(r=>r.wwt))*1.1, "m")}
+    ${block("Triage efficiency — higher is better", "triage", 100, "%")}
+    ${block("Max wait, urgency-1 patients — starvation risk", "maxWaitU1", Math.max(60,...results.map(r=>r.maxWaitU1))*1.1, "m")}
+    <table class="compare-table">
+      <tr><th>Strategy</th><th>Served</th><th>Avg utilization</th><th>Max wait (urgency 5)</th></tr>
+      ${results.map(r=>`<tr><td style="color:${STRAT_COLOR[r.strategy]}">${STRAT_LABEL[r.strategy]}</td><td>${r.served}</td><td>${r.util.toFixed(0)}%</td><td>${r.maxWaitU5.toFixed(0)}m</td></tr>`).join("")}
+    </table>
+  `;
+  el("compareResults").innerHTML = html;
+}
 
-  // Chaos triggers
-  document.getElementById('chaosMass').addEventListener('click', () => {
-    document.body.classList.add('chaos-flash');
-    setTimeout(() => document.body.classList.remove('chaos-flash'), 900);
-    for(let i=0; i<4; i++) spawnPatient();
-    document.getElementById('activeDisruptionsNote').textContent = 'ACTIVE SURGE: Mass Casualty Event triggered (+4 critical cases injected).';
-    logEvent('DISRUPTION: Mass casualty event injected into priority queue.', 'event');
-  });
+/* ======================= LIVE COMMAND-CENTER CLOCK (real-world IST) ======================= */
+// Entirely independent of the simulation's requestAnimationFrame loop — runs on its own
+// setInterval, so it never lags behind (or is affected by) simulation speed/pause state.
+const IST_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Asia/Kolkata', weekday: 'long', month: 'short', day: '2-digit', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+});
+function updateRealClock(){
+  const parts = IST_FORMATTER.formatToParts(new Date());
+  const get = t => parts.find(p => p.type === t)?.value || '';
+  const text = `${get('weekday')}, ${get('month')} ${get('day')}, ${get('year')} — ${get('hour')}:${get('minute')}:${get('second')} ${get('dayPeriod').toUpperCase()} IST`;
+  const target = el("realClock");
+  if(target) target.textContent = text;
+}
+updateRealClock();
+setInterval(updateRealClock, 1000);
 
-  document.getElementById('chaosStaff').addEventListener('click', () => {
-    document.body.classList.add('chaos-flash');
-    setTimeout(() => document.body.classList.remove('chaos-flash'), 900);
-    cap.nurse = Math.max(4, cap.nurse - 4);
-    document.getElementById('activeDisruptionsNote').textContent = 'ACTIVE DISRUPTION: Staff shortage active (-4 nurses offline).';
-    logEvent('DISRUPTION: Staff shortage triggered. Nurse capacity reduced to 10.', 'event');
-    renderResourceGrids();
-  });
-
-  document.getElementById('chaosOR').addEventListener('click', () => {
-    document.body.classList.add('chaos-flash');
-    setTimeout(() => document.body.classList.remove('chaos-flash'), 900);
-    downOR = Math.min(cap.or, downOR + 1);
-    document.getElementById('activeDisruptionsNote').textContent = 'ACTIVE DISRUPTION: Operating Room failure (1 OR offline).';
-    logEvent('DISRUPTION: Operating room failure. Capacity restricted.', 'event');
-    renderResourceGrids();
-  });
-
-  // Modal handlers
-  document.getElementById('compareBtn').addEventListener('click', () => {
-    document.getElementById('compareModal').classList.add('show');
-  });
-  document.getElementById('closeModalBtn').addEventListener('click', () => {
-    document.getElementById('compareModal').classList.remove('show');
-  });
-
-  // Initial render tick
-  renderUI();
-  setInterval(updateSimulation, 1000);
+/* init */
+hospital.arrivalRatePerHour = Number(el("rateSlider").value);
+render();
+window.addEventListener("resize", drawChart);
+})();
 </script>
 </body>
 </html>
